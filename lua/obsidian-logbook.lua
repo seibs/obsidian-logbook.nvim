@@ -124,13 +124,15 @@ function M.find_clocked_in_files(client)
 end
 
 function M.find_clocked_in_modified_buffers(client)
-    local client_dir = client.dir:absolute()
+    local client_dir = client.dir:resolve().filename
     local buffers = {}
     for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
         if vim.fn.getbufvar(bufnr, "&modified") == 1 then
             local path = vim.api.nvim_buf_get_name(bufnr);
             -- Only look at files within the vault
             -- TODO this will probably fail if a non-note from the vault is open
+            print(vim.inspect(path))
+            print(vim.inspect(client_dir))
             if string.sub(path, 1, string.len(client_dir)) == client_dir then
                 local note = Note.from_buffer(bufnr)
                 if is_clocked_in(note) then
@@ -167,7 +169,7 @@ end
 local function clock_out_buffer(bufnr)
     local note = Note.from_buffer(bufnr);
     note = clock_out_note(note);
-    note:save_to_buffer(bufnr);
+    note:save_to_buffer({ bufnr = bufnr });
 end
 
 function M.clock_in()
@@ -188,7 +190,7 @@ function M.clock_in()
     local new_entry = Entry:new();
     table.insert(logbook, new_entry:to_string());
     note:add_field("logbook", logbook);
-    note:save_to_buffer(bufnr);
+    note:save_to_buffer({bufnr = bufnr});
 end
 
 function M.clock_out()
